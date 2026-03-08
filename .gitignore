@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+venv/
+modelo_pqrs/
+*.zip
+
+tinyllama_base/
+modelo_pqrs/
+*.safetensors
