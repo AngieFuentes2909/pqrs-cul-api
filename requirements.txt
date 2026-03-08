@@ -1,8 +1,4 @@
 flask
 gunicorn
 bcrypt
-gradio
-transformers
-peft
-accelerate
-sentencepiece
+requests
