@@ -1,4 +1,8 @@
 flask
-flask-cors
-gradio_client
 gunicorn
+bcrypt
+gradio
+transformers
+peft
+accelerate
+sentencepiece
