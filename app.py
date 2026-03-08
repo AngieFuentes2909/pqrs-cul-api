@@ -3,7 +3,7 @@ os.environ["MODEL_LOCAL"] = "false"
 
 from flask import Flask, jsonify
 from flask_cors import CORS
-from controllers.chat_controller import chat_bp
+from controllers.controllers import chat_bp
 
 
 def create_app():
