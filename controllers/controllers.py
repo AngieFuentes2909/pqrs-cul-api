@@ -8,6 +8,7 @@ from gradio_client import Client
 # conexión con el Space en Hugging Face
 try:
     cliente_modelo = Client("Angiesaray/pqrs-cul-api")
+    print("Modelo conectado correctamente")
 except Exception as e:
     print("Error conectando con el modelo:", e)
     cliente_modelo = None
@@ -247,9 +248,11 @@ def mensaje():
     try:
 
         if cliente_modelo:
+
             respuesta = cliente_modelo.predict(
                 msg,
-                api_name="/responder"
+                api_name="/responder",
+                timeout=20
             )
 
             if isinstance(respuesta, list):
