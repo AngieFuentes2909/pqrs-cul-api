@@ -4,3 +4,4 @@ gunicorn
 bcrypt
 requests
 gradio_client
+pg8000
