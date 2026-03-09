@@ -252,7 +252,7 @@ def mensaje():
             respuesta = cliente_modelo.predict(
                 msg,
                 api_name="/responder",
-                timeout=20
+                
             )
 
             if isinstance(respuesta, list):
