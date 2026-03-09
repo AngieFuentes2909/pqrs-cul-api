@@ -149,7 +149,16 @@ def historial(session_id):
         return jsonify({'error': resultado['error']}), 404
 
     return jsonify(resultado), 200
-
+@conversacion_bp.route('/<session_id>/eliminar', methods=['DELETE'])
+def eliminar(session_id):
+    try:
+        cursor = conversacion_model.db.get_cursor()
+        cursor.execute("DELETE FROM mensajes WHERE conversacion_id = (SELECT id FROM conversaciones WHERE session_id = %s)", (session_id,))
+        cursor.execute("DELETE FROM conversaciones WHERE session_id = %s", (session_id,))
+        return jsonify({'ok': True, 'mensaje': 'Conversacion eliminada'}), 200
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 400
+    
 @conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
 def por_usuario(usuario_id):
     resultado = conversacion_model.listar_por_usuario(usuario_id)
