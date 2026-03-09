@@ -4,17 +4,24 @@ from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
 from gradio_client import Client
 
-# conexion con el Space en Hugging Face
-cliente_modelo = Client("Angiesaray/tinyllama-pqrs-cul")
 
-usuario_bp      = Blueprint('usuarios',       __name__)
+# conexión con el Space en Hugging Face
+cliente_modelo = Client(
+    "Angiesaray/tinyllama-pqrs-cul",
+    timeout=60
+)
+
+
+usuario_bp      = Blueprint('usuarios', __name__)
 conversacion_bp = Blueprint('conversaciones', __name__)
-pqrs_bp         = Blueprint('pqrs',           __name__)
-chat_bp         = Blueprint('chat',           __name__)
+pqrs_bp         = Blueprint('pqrs', __name__)
+chat_bp         = Blueprint('chat', __name__)
+
 
 usuario_model      = UsuarioModel()
 conversacion_model = ConversacionModel()
 solicitud_model    = SolicitudModel()
+
 
 # ═══════════════════════════════════════════════════════════
 # USUARIOS
@@ -22,7 +29,9 @@ solicitud_model    = SolicitudModel()
 
 @usuario_bp.route('/registro', methods=['POST'])
 def registrar():
+
     data = request.get_json()
+
     if not data:
         return jsonify({'error': 'Datos requeridos'}), 400
 
@@ -99,12 +108,12 @@ def iniciar():
 
     if not resultado['ok']:
         return jsonify({
-            'mensaje': 'Sesion activa',
+            'mensaje': 'Sesión ya activa',
             'session_id': session_id
         }), 200
 
     return jsonify({
-        'mensaje': 'Sesion iniciada',
+        'mensaje': 'Sesión iniciada',
         'conversacion': resultado['conversacion']
     }), 201
 
@@ -119,12 +128,12 @@ def finalizar(session_id):
 
     if not resultado['ok']:
         return jsonify({
-            'mensaje': 'Sesion finalizada',
+            'mensaje': 'Sesión ya finalizada',
             'session_id': session_id
         }), 200
 
     return jsonify({
-        'mensaje': 'Sesion finalizada',
+        'mensaje': 'Sesión finalizada',
         'conversacion': resultado['conversacion']
     }), 200
 
