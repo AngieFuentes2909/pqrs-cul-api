@@ -7,7 +7,7 @@ from gradio_client import Client
 
 # conexión con el Space en Hugging Face
 try:
-    cliente_modelo = Client("Angiesaray/tinyllama-pqrs-cul")
+    cliente_modelo = Client("Angiesaray/pqrs-cul-api")
 except Exception as e:
     print("Error conectando con el modelo:", e)
     cliente_modelo = None
