@@ -243,28 +243,37 @@ def mensaje():
             'fin_sesion': True
         }), 200
 
+
     conversacion_model.guardar_mensaje(session_id, 'user', msg)
 
-    try:
 
-        if cliente_modelo:
+    respuesta = None
 
-            respuesta = cliente_modelo.predict(
+
+    # intentar usar el modelo
+    if cliente_modelo:
+        try:
+
+            resultado = cliente_modelo.submit(
                 msg,
-                api_name="/responder",
-                
+                api_name="/responder"
             )
+
+            respuesta = resultado.result(timeout=10)
 
             if isinstance(respuesta, list):
                 respuesta = respuesta[0]
 
-        else:
-            respuesta = respuesta_offline(msg)
+        except Exception as e:
 
-    except Exception as e:
+            print("Modelo tardó demasiado o falló:", e)
+            respuesta = None
 
-        print("Error llamando modelo:", e)
+
+    # fallback si el modelo no respondió
+    if not respuesta:
         respuesta = respuesta_offline(msg)
+
 
     conversacion_model.guardar_mensaje(session_id, 'assistant', respuesta)
 
