@@ -150,7 +150,12 @@ def historial(session_id):
 
     return jsonify(resultado), 200
 
-
+@conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
+def por_usuario(usuario_id):
+    resultado = conversacion_model.listar_por_usuario(usuario_id)
+    if not resultado['ok']:
+        return jsonify({'error': resultado['error']}), 400
+    return jsonify(resultado), 200
 # ═══════════════════════════════════════════════════════════
 # PQRS
 # ═══════════════════════════════════════════════════════════
