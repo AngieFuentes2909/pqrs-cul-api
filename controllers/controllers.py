@@ -6,11 +6,7 @@ from gradio_client import Client
 
 
 # conexión con el Space en Hugging Face
-cliente_modelo = Client(
-    "Angiesaray/tinyllama-pqrs-cul",
-    timeout=60
-)
-
+cliente_modelo = Client("Angiesaray/tinyllama-pqrs-cul")
 
 usuario_bp      = Blueprint('usuarios', __name__)
 conversacion_bp = Blueprint('conversaciones', __name__)
