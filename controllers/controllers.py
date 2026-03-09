@@ -81,19 +81,15 @@ def login():
     }), 200
 
 
-@conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
-def por_usuario(usuario_id):
-    # Filtros opcionales
-    fecha_inicio = request.args.get('fecha_inicio')   # ej: 2026-03-01
-    estado = request.args.get('estado')               # activa | cerrada
-    palabra = request.args.get('palabra')             # buscar en titulo
+@usuario_bp.route('/<int:usuario_id>', methods=['GET'])
+def obtener_usuario(usuario_id):
 
-    resultado = conversacion_model.listar_por_usuario(
-        usuario_id, fecha_inicio, estado, palabra
-    )
+    resultado = usuario_model.obtener_por_id(usuario_id)
+
     if not resultado['ok']:
-        return jsonify({'error': resultado['error']}), 400
-    return jsonify(resultado), 200
+        return jsonify({'error': resultado['error']}), 404
+
+    return jsonify(resultado['usuario']), 200
 
 
 # ═══════════════════════════════════════════════════════════
@@ -252,7 +248,7 @@ def mensaje():
         respuesta = "Hasta luego. Si necesitas más ayuda con el sistema PQRS de la CUL puedes iniciar otra conversación."
 
         conversacion_model.guardar_mensaje(session_id, 'user', msg)
-        conversacion_model.actualizar_titulo(session_id, msg)
+        
         conversacion_model.guardar_mensaje(session_id, 'assistant', respuesta)
 
         conversacion_model.finalizar(session_id)
