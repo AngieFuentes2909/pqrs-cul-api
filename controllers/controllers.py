@@ -249,8 +249,12 @@ def mensaje():
         if cliente_modelo:
             respuesta = cliente_modelo.predict(
                 msg,
-                api_name="/predict"
+                api_name="/responder"
             )
+
+            if isinstance(respuesta, list):
+                respuesta = respuesta[0]
+
         else:
             respuesta = respuesta_offline(msg)
 
