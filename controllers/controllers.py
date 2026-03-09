@@ -259,7 +259,7 @@ def mensaje():
                 api_name="/responder"
             )
 
-            respuesta = resultado.result(timeout=10)
+            respuesta = resultado.result(timeout=120)
 
             if isinstance(respuesta, list):
                 respuesta = respuesta[0]
