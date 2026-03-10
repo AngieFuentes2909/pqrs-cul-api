@@ -9,16 +9,19 @@ SPACE_URL = os.getenv(
 
 def generar_respuesta(pregunta):
     try:
-        # 1️⃣ iniciar llamada
+        # iniciar evento
         r = requests.post(
             f"{SPACE_URL}/gradio_api/call//predict",
             json={"data": [pregunta]},
             timeout=60
         )
 
+        if r.status_code != 200:
+            return "Error iniciando consulta al modelo."
+
         event_id = r.json()["event_id"]
 
-        # 2️⃣ obtener resultado
+        # obtener resultado
         r2 = requests.get(
             f"{SPACE_URL}/gradio_api/call//predict/{event_id}",
             timeout=60
@@ -29,7 +32,7 @@ def generar_respuesta(pregunta):
                 data = json.loads(line[5:])
                 return data[0]
 
-        return "No se pudo obtener respuesta."
+        return "No se recibió respuesta del modelo."
 
     except Exception as e:
         print(f"Error Space: {e}")
