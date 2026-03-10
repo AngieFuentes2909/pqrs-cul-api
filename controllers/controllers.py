@@ -6,7 +6,7 @@ from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
 from nlp.procesador import preprocesar
 
-SPACE_ID = "Angiesaray/pqrs-cul-api"
+SPACE_ID = "https://angiesaray-pqrs-cul-api.hf.space/"
 _cliente = None
 
 def get_respuesta_modelo(mensaje):
