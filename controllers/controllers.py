@@ -3,6 +3,7 @@ from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
 from gradio_client import Client
+from nlp.procesador import preprocesar
 
 
 # conexión con el Space en Hugging Face
@@ -150,27 +151,49 @@ def historial(session_id):
 
     return jsonify(resultado), 200
 
+
 @conversacion_bp.route('/<session_id>/eliminar', methods=['DELETE'])
 def eliminar(session_id):
+
     try:
         cursor = conversacion_model.db.get_cursor()
-        cursor.execute("DELETE FROM mensajes WHERE conversacion_id = (SELECT id FROM conversaciones WHERE session_id = %s)", (session_id,))
-        cursor.execute("DELETE FROM conversaciones WHERE session_id = %s", (session_id,))
+
+        cursor.execute(
+            "DELETE FROM mensajes WHERE conversacion_id = (SELECT id FROM conversaciones WHERE session_id = %s)",
+            (session_id,)
+        )
+
+        cursor.execute(
+            "DELETE FROM conversaciones WHERE session_id = %s",
+            (session_id,)
+        )
+
         return jsonify({'ok': True, 'mensaje': 'Conversacion eliminada'}), 200
+
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 400
-    
+
+
 @conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
 def por_usuario(usuario_id):
+
     fecha_inicio = request.args.get('fecha_inicio')
     estado = request.args.get('estado')
     palabra = request.args.get('palabra')
+
     resultado = conversacion_model.listar_por_usuario(
-        usuario_id, fecha_inicio, estado, palabra
+        usuario_id,
+        fecha_inicio,
+        estado,
+        palabra
     )
+
     if not resultado['ok']:
         return jsonify({'error': resultado['error']}), 400
+
     return jsonify(resultado), 200
+
+
 # ═══════════════════════════════════════════════════════════
 # PQRS
 # ═══════════════════════════════════════════════════════════
@@ -252,6 +275,10 @@ def mensaje():
 
         respuesta = "Hasta luego. Si necesitas más ayuda con el sistema PQRS de la CUL puedes iniciar otra conversación."
 
+        nlp_result = preprocesar(msg)
+
+        print(f"NLP → tokens: {nlp_result['tokens']} | intencion: {nlp_result['intencion']}")
+
         conversacion_model.guardar_mensaje(session_id, 'user', msg)
         conversacion_model.actualizar_titulo(session_id, msg)
         conversacion_model.guardar_mensaje(session_id, 'assistant', respuesta)
@@ -264,14 +291,10 @@ def mensaje():
             'fin_sesion': True
         }), 200
 
-
     conversacion_model.guardar_mensaje(session_id, 'user', msg)
-
 
     respuesta = None
 
-
-    # intentar usar el modelo
     if cliente_modelo:
         try:
 
@@ -290,11 +313,8 @@ def mensaje():
             print("Modelo tardó demasiado o falló:", e)
             respuesta = None
 
-
-    # fallback si el modelo no respondió
     if not respuesta:
         respuesta = respuesta_offline(msg)
-
 
     conversacion_model.guardar_mensaje(session_id, 'assistant', respuesta)
 
