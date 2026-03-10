@@ -5,6 +5,7 @@ from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
 from nlp.procesador import preprocesar
+import requests
 
 SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
 _cliente = None
