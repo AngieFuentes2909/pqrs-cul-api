@@ -18,22 +18,19 @@ def get_respuesta_modelo(mensaje):
         if r.status_code != 200:
             print("Error Space:", r.text)
             return None
-        print("space response:", r.text[:300])
         event_id = r.json().get("event_id")
         r2 = requests.get(
             f"{SPACE_URL}/gradio_api/call/responder/{event_id}",
             stream=True,
             timeout=300
         )
-        print(f"Step2 status: {r2.status_code}")
         for line in r2.iter_lines():
             if line:
                 decoded = line.decode()
-                print(f"Line: {decoded[:200]}")
                 if decoded.startswith("data:"):
                     data = json.loads(decoded[5:])
                     if data is not None:
-                     return data[0]
+                        return data[0]
         return None
     except Exception as e:
         print("Modelo falló:", e)
