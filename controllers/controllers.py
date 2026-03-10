@@ -7,12 +7,20 @@ from nlp.procesador import preprocesar
 
 
 # conexión con el Space en Hugging Face
-try:
-    cliente_modelo = Client("Angiesaray/pqrs-cul-api")
-    print("Modelo conectado correctamente")
-except Exception as e:
-    print("Error conectando con el modelo:", e)
-    cliente_modelo = None
+cliente_modelo = None
+
+
+def get_cliente():
+    global cliente_modelo
+    try:
+        if cliente_modelo is None:
+            cliente_modelo = Client("Angiesaray/pqrs-cul-api")
+            print("Modelo conectado correctamente")
+        return cliente_modelo
+    except Exception as e:
+        print("Error conectando con el modelo:", e)
+        cliente_modelo = None
+        return None
 
 
 usuario_bp = Blueprint('usuarios', __name__)
@@ -152,28 +160,6 @@ def historial(session_id):
     return jsonify(resultado), 200
 
 
-@conversacion_bp.route('/<session_id>/eliminar', methods=['DELETE'])
-def eliminar(session_id):
-
-    try:
-        cursor = conversacion_model.db.get_cursor()
-
-        cursor.execute(
-            "DELETE FROM mensajes WHERE conversacion_id = (SELECT id FROM conversaciones WHERE session_id = %s)",
-            (session_id,)
-        )
-
-        cursor.execute(
-            "DELETE FROM conversaciones WHERE session_id = %s",
-            (session_id,)
-        )
-
-        return jsonify({'ok': True, 'mensaje': 'Conversacion eliminada'}), 200
-
-    except Exception as e:
-        return jsonify({'ok': False, 'error': str(e)}), 400
-
-
 @conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
 def por_usuario(usuario_id):
 
@@ -192,44 +178,6 @@ def por_usuario(usuario_id):
         return jsonify({'error': resultado['error']}), 400
 
     return jsonify(resultado), 200
-
-
-# ═══════════════════════════════════════════════════════════
-# PQRS
-# ═══════════════════════════════════════════════════════════
-
-@pqrs_bp.route('/crear', methods=['POST'])
-def crear():
-
-    data = request.get_json()
-
-    if not data:
-        return jsonify({'error': 'Datos requeridos'}), 400
-
-    usuario_id = data.get('usuario_id')
-    tipo = data.get('tipo', '').strip()
-    descripcion = data.get('descripcion', '').strip()
-    prioridad = data.get('prioridad', 'NORMAL')
-    dependencia = data.get('dependencia')
-
-    if not tipo or not descripcion:
-        return jsonify({'error': 'tipo y descripcion son obligatorios'}), 400
-
-    resultado = solicitud_model.crear(
-        usuario_id,
-        tipo,
-        descripcion,
-        prioridad,
-        dependencia
-    )
-
-    if not resultado['ok']:
-        return jsonify({'error': resultado['error']}), 400
-
-    return jsonify({
-        'mensaje': 'Solicitud PQRS creada',
-        'solicitud': resultado['solicitud']
-    }), 201
 
 
 # ═══════════════════════════════════════════════════════════
@@ -295,10 +243,11 @@ def mensaje():
 
     respuesta = None
 
-    if cliente_modelo:
-        try:
+    cm = get_cliente()
 
-            resultado = cliente_modelo.submit(
+    if cm:
+        try:
+            resultado = cm.submit(
                 msg,
                 api_name="/responder"
             )
