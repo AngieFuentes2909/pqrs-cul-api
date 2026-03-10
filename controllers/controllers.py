@@ -19,7 +19,7 @@ def get_respuesta_modelo(mensaje):
         r = requests.post(
             f"{SPACE_URL}/gradio_api/call/predict",
             json={"data": [mensaje]},
-            timeout=60
+            timeout=180
         )
 
         if r.status_code != 200:
