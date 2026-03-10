@@ -253,7 +253,7 @@ def mensaje():
         respuesta = "Hasta luego. Si necesitas más ayuda con el sistema PQRS de la CUL puedes iniciar otra conversación."
 
         conversacion_model.guardar_mensaje(session_id, 'user', msg)
-        
+        conversacion_model.actualizar_titulo(session_id, msg)
         conversacion_model.guardar_mensaje(session_id, 'assistant', respuesta)
 
         conversacion_model.finalizar(session_id)
