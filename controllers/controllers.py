@@ -25,9 +25,11 @@ def get_respuesta_modelo(mensaje):
             stream=True,
             timeout=300
         )
+        print(f"Step2 status: {r2.status_code}")
         for line in r2.iter_lines():
             if line:
                 decoded = line.decode()
+                print(f"Line: {decoded[:200]}")
                 if decoded.startswith("data:"):
                     data = json.loads(decoded[5:])
                     return data[0]
