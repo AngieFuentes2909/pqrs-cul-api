@@ -32,7 +32,8 @@ def get_respuesta_modelo(mensaje):
                 print(f"Line: {decoded[:200]}")
                 if decoded.startswith("data:"):
                     data = json.loads(decoded[5:])
-                    return data[0]
+                    if data is not None:
+                     return data[0]
         return None
     except Exception as e:
         print("Modelo falló:", e)
