@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, requests, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
@@ -9,15 +9,10 @@ from nlp.procesador import preprocesar
 SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
 _cliente = None
 
-import requests
-import json
-
-SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
-
 def get_respuesta_modelo(mensaje):
     try:
         r = requests.post(
-            f"{SPACE_URL}/gradio_api/call/predict",
+            f"{SPACE_URL}/gradio_api/call/responder",
             json={"data": [mensaje]},
             timeout=180
         )
@@ -29,7 +24,7 @@ def get_respuesta_modelo(mensaje):
         event_id = r.json().get("event_id")
 
         r2 = requests.get(
-            f"{SPACE_URL}/gradio_api/call/predict/{event_id}",
+            f"{SPACE_URL}/gradio_api/call/responder/{event_id}",
             stream=True,
             timeout=300
         )
