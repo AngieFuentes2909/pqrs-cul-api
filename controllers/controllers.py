@@ -4,12 +4,15 @@ from flask import Blueprint, request, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
-from nlp.procesador import prep
-import requests
-
+from nlp.procesador import preprocesar
 
 SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
 _cliente = None
+
+import requests
+import json
+
+SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
 
 def get_respuesta_modelo(mensaje):
     try:
@@ -34,6 +37,7 @@ def get_respuesta_modelo(mensaje):
     except Exception as e:
         print(f"Modelo falló: {e}")
         return None
+
 
 usuario_bp = Blueprint('usuarios', __name__)
 conversacion_bp = Blueprint('conversaciones', __name__)
