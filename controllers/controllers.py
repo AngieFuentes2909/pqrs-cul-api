@@ -249,7 +249,7 @@ def mensaje():
         try:
             resultado = cm.submit(
                 msg,
-                api_name="/responder"
+                api_name="/predictr"
             )
 
             respuesta = resultado.result(timeout=120)
