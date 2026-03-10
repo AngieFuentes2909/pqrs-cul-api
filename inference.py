@@ -1,25 +1,36 @@
 import os
 import requests
+import json
 
-API_URL = os.getenv(
+SPACE_URL = os.getenv(
     "SPACE_URL",
-    "https://angiesaray-pqrs-cul-api.hf.space/gradio_api/predict"
+    "https://angiesaray-pqrs-cul-api.hf.space"
 )
 
 def generar_respuesta(pregunta):
     try:
-        response = requests.post(
-            API_URL,
+        # 1️⃣ iniciar llamada
+        r = requests.post(
+            f"{SPACE_URL}/gradio_api/call//predict",
             json={"data": [pregunta]},
             timeout=60
         )
 
-        if response.status_code == 200:
-            data = response.json()
-            return data["data"][0]
+        event_id = r.json()["event_id"]
 
-        return "Error consultando el modelo."
+        # 2️⃣ obtener resultado
+        r2 = requests.get(
+            f"{SPACE_URL}/gradio_api/call//predict/{event_id}",
+            timeout=60
+        )
+
+        for line in r2.text.split("\n"):
+            if line.startswith("data:"):
+                data = json.loads(line[5:])
+                return data[0]
+
+        return "No se pudo obtener respuesta."
 
     except Exception as e:
-        print(f"Modelo falló: {e}")
+        print(f"Error Space: {e}")
         return "El modelo no está disponible en este momento."
