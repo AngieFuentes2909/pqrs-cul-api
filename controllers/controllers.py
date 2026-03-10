@@ -1,14 +1,12 @@
 import os
 import json
+import requests
 from flask import Blueprint, request, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
-from nlp.procesador import preprocesar
-import requests
 
 SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
-_cliente = None
 
 def get_respuesta_modelo(mensaje):
     try:
@@ -17,28 +15,22 @@ def get_respuesta_modelo(mensaje):
             json={"data": [mensaje]},
             timeout=180
         )
-
         if r.status_code != 200:
             print("Error Space:", r.text)
             return None
-
         event_id = r.json().get("event_id")
-
         r2 = requests.get(
             f"{SPACE_URL}/gradio_api/call/responder/{event_id}",
             stream=True,
             timeout=300
         )
-
         for line in r2.iter_lines():
             if line:
                 decoded = line.decode()
                 if decoded.startswith("data:"):
                     data = json.loads(decoded[5:])
                     return data[0]
-
         return None
-
     except Exception as e:
         print("Modelo falló:", e)
         return None
@@ -208,10 +200,6 @@ def mensaje():
         return jsonify({'error': 'El mensaje no puede estar vacío'}), 400
     if not session_id:
         return jsonify({'error': 'session_id es obligatorio'}), 400
-
-    # NLP: preprocesar mensaje
-    nlp_result = preprocesar(msg)
-    print(f"NLP → tokens: {nlp_result['tokens']} | intencion: {nlp_result['intencion']}")
 
     despedidas = ['adios', 'salir', 'terminar', 'bye', 'chao']
     if any(d in msg.lower() for d in despedidas):
