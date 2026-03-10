@@ -4,28 +4,36 @@ from flask import Blueprint, request, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
-from nlp.procesador import preprocesar
+from nlp.procesador import prep
+import requests
 
-SPACE_ID = "https://angiesaray-pqrs-cul-api.hf.space"
+
+SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
 _cliente = None
 
 def get_respuesta_modelo(mensaje):
-    global _cliente
     try:
-        from gradio_client import Client
-        if _cliente is None:
-            _cliente = Client(SPACE_ID)
-            print("Cliente conectado")
-        respuesta = _cliente.predict(
-            pregunta= mensaje,
-            api_name="//predict"
+        r = requests.post(
+            f"{SPACE_URL}/gradio_api/call/predict",
+            json={"data": [mensaje]},
+            timeout=60
         )
-        return respuesta
-    except Exception as e:
-        print(f'Modelo falló: {e}')
-        _cliente = None
-        return None
 
+        event_id = r.json()["event_id"]
+
+        r2 = requests.get(
+            f"{SPACE_URL}/gradio_api/call/predict/{event_id}",
+            timeout=60
+        )
+
+        for line in r2.text.split("\n"):
+            if line.startswith("data:"):
+                data = json.loads(line[5:])
+                return data[0]
+
+    except Exception as e:
+        print(f"Modelo falló: {e}")
+        return None
 
 usuario_bp = Blueprint('usuarios', __name__)
 conversacion_bp = Blueprint('conversaciones', __name__)
