@@ -22,20 +22,29 @@ def get_respuesta_modelo(mensaje):
             timeout=60
         )
 
-        event_id = r.json()["event_id"]
+        if r.status_code != 200:
+            print("Error Space:", r.text)
+            return None
+
+        event_id = r.json().get("event_id")
 
         r2 = requests.get(
             f"{SPACE_URL}/gradio_api/call/predict/{event_id}",
+            stream=True,
             timeout=60
         )
 
-        for line in r2.text.split("\n"):
-            if line.startswith("data:"):
-                data = json.loads(line[5:])
-                return data[0]
+        for line in r2.iter_lines():
+            if line:
+                decoded = line.decode()
+                if decoded.startswith("data:"):
+                    data = json.loads(decoded[5:])
+                    return data[0]
+
+        return None
 
     except Exception as e:
-        print(f"Modelo falló: {e}")
+        print("Modelo falló:", e)
         return None
 
 
