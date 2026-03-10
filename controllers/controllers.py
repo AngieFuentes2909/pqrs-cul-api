@@ -18,6 +18,7 @@ def get_respuesta_modelo(mensaje):
         if r.status_code != 200:
             print("Error Space:", r.text)
             return None
+        print("space response:", r.text[:300])
         event_id = r.json().get("event_id")
         r2 = requests.get(
             f"{SPACE_URL}/gradio_api/call/responder/{event_id}",
