@@ -96,6 +96,25 @@ def generar_pdf_conversacion(historial, session_id):
 
 
 def enviar_email_pdf(destinatario, pdf_buffer, session_id):
+    import resend
+    resend.api_key = os.getenv('RESEND_API_KEY', '')
+    
+    params = {
+        "from": "PQRS CUL <onboarding@resend.dev>",
+        "to": [destinatario],
+        "subject": f"Reporte Conversacion PQRS - CUL | Sesion {session_id[:8].upper()}",
+        "html": """
+        <h2>Sistema PQRS - CUL</h2>
+        <p>Adjunto encontrara el reporte de su conversacion con el Asistente Virtual PQRS de la Corporacion Universitaria Latinoamericana.</p>
+        <br>
+        <p><b>Corporacion Universitaria Latinoamericana - CUL</b><br>Sistema PQRS Virtual</p>
+        """,
+        "attachments": [{
+            "filename": f"reporte_pqrs_{session_id[:8]}.pdf",
+            "content": list(pdf_buffer.read())
+        }]
+    }
+    resend.Emails.send(params)
     MAIL_USER = os.getenv('MAIL_USER', 'angiesfc29@gmail.com')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '')
     
