@@ -1,29 +1,39 @@
 import os
+import json
+import requests as req
 from flask import Blueprint, request, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
 from nlp.procesador import preprocesar
-from gradio_client import Client
 
 SPACE_URL = os.getenv('SPACE_URL', 'https://angiesaray-pqrs-cul-api.hf.space')
-_cliente = None
 
 def get_respuesta_modelo(mensaje):
-    global _cliente
     try:
-        if _cliente is None:
-            _cliente = Client(SPACE_URL)
-            print("Cliente conectado")
-        respuesta = _cliente.predict(
-            pregunta=mensaje,
-            api_name="/predict"
+        r = req.post(
+            f'{SPACE_URL}/call/predict',
+            json={"data": [mensaje]},
+            headers={"Content-Type": "application/json"},
+            timeout=30
         )
-        return respuesta
+        print(f"Step1 status: {r.status_code} body: {r.text[:200]}")
+        if r.status_code == 200:
+            event_id = r.json().get('event_id')
+            if not event_id:
+                return None
+            r2 = req.get(
+                f'{SPACE_URL}/call/predict/{event_id}',
+                timeout=120
+            )
+            print(f"Step2 status: {r2.status_code} body: {r2.text[:200]}")
+            for line in r2.text.split('\n'):
+                if line.startswith('data:'):
+                    data = json.loads(line[5:])
+                    return data[0]
     except Exception as e:
         print(f'Modelo falló: {e}')
-        _cliente = None
-        return None
+    return None
 
 
 usuario_bp = Blueprint('usuarios', __name__)
@@ -207,7 +217,6 @@ def mensaje():
     conversacion_model.guardar_mensaje(session_id, 'user', msg)
     conversacion_model.actualizar_titulo(session_id, msg)
 
-    # Llamar al modelo via requests
     respuesta = get_respuesta_modelo(msg)
 
     if not respuesta:
