@@ -162,7 +162,12 @@ def eliminar(session_id):
     
 @conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
 def por_usuario(usuario_id):
-    resultado = conversacion_model.listar_por_usuario(usuario_id)
+    fecha_inicio = request.args.get('fecha_inicio')
+    estado = request.args.get('estado')
+    palabra = request.args.get('palabra')
+    resultado = conversacion_model.listar_por_usuario(
+        usuario_id, fecha_inicio, estado, palabra
+    )
     if not resultado['ok']:
         return jsonify({'error': resultado['error']}), 400
     return jsonify(resultado), 200

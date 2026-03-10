@@ -90,22 +90,36 @@ class ConversacionModel:
         except Exception as e:
             return {'ok': False, 'error': str(e)}
         
-    def listar_por_usuario(self, usuario_id):
-        try:
-            cursor = self.db.get_cursor()
-            cursor.execute("""
-                SELECT id, session_id, fecha_inicio, fecha_fin, estado, total_mensajes
-                FROM conversaciones WHERE usuario_id = %s
-                ORDER BY fecha_inicio DESC
-            """, (usuario_id,))
-            rows = cursor.fetchall()
-            convs = []
-            for row in rows:
-                c = self._to_dict(cursor, row)
-                c['fecha_inicio'] = str(c['fecha_inicio'])
-                if c['fecha_fin']:
-                    c['fecha_fin'] = str(c['fecha_fin'])
-                convs.append(c)
-            return {'ok': True, 'conversaciones': convs}
-        except Exception as e:
-            return {'ok': False, 'error': str(e)}
+   def listar_por_usuario(self, usuario_id, fecha_inicio=None, estado=None, palabra=None):
+    try:
+        cursor = self.db.get_cursor()
+        query = """
+            SELECT id, session_id, fecha_inicio, fecha_fin, estado, total_mensajes, titulo
+            FROM conversaciones 
+            WHERE usuario_id = %s AND titulo IS NOT NULL
+        """
+        params = [usuario_id]
+
+        if fecha_inicio:
+            query += " AND DATE(fecha_inicio) >= %s"
+            params.append(fecha_inicio)
+        if estado:
+            query += " AND estado = %s"
+            params.append(estado)
+        if palabra:
+            query += " AND titulo ILIKE %s"
+            params.append(f'%{palabra}%')
+
+        query += " ORDER BY fecha_inicio DESC"
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+        convs = []
+        for row in rows:
+            c = self._to_dict(cursor, row)
+            c['fecha_inicio'] = str(c['fecha_inicio'])
+            if c['fecha_fin']:
+                c['fecha_fin'] = str(c['fecha_fin'])
+            convs.append(c)
+        return {'ok': True, 'conversaciones': convs}
+    except Exception as e:
+        return {'ok': False, 'error': str(e)}
