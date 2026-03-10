@@ -17,7 +17,7 @@ def get_respuesta_modelo(mensaje):
             _cliente = Client(SPACE_ID)
             print("Cliente conectado")
         respuesta = _cliente.predict(
-            pregunta=mensaje,
+            mensaje,
             api_name="/predict"
         )
         return respuesta
