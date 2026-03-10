@@ -14,6 +14,7 @@ class ConversacionModel:
     def iniciar(self, session_id, usuario_id=None):
         try:
             cursor = self.db.get_cursor()
+
             cursor.execute("""
                 INSERT INTO conversaciones (session_id, usuario_id, estado)
                 VALUES (%s, %s, 'activa')
@@ -90,6 +91,20 @@ class ConversacionModel:
             msg['timestamp'] = str(msg['timestamp'])
 
             return {'ok': True, 'mensaje': msg}
+
+        except Exception as e:
+            return {'ok': False, 'error': str(e)}
+
+    def actualizar_titulo(self, session_id, titulo):
+        try:
+            cursor = self.db.get_cursor()
+
+            cursor.execute(
+                "UPDATE conversaciones SET titulo = %s WHERE session_id = %s AND titulo IS NULL",
+                (titulo[:100], session_id)
+            )
+
+            return {'ok': True}
 
         except Exception as e:
             return {'ok': False, 'error': str(e)}
