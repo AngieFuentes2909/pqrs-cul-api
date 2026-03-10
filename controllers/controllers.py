@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Blueprint, requests, jsonify
+from flask import Blueprint, request, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
