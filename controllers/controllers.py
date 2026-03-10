@@ -5,6 +5,18 @@ from flask import Blueprint, request, jsonify
 from models.usuario_model import UsuarioModel
 from models.conversacion_model import ConversacionModel
 from models.solicitud_model import SolicitudModel
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import io
+
 
 SPACE_URL = "https://angiesaray-pqrs-cul-api.hf.space"
 
@@ -36,7 +48,84 @@ def get_respuesta_modelo(mensaje):
         print("Modelo falló:", e)
         return None
 
+def generar_pdf_conversacion(historial, session_id):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter,
+                            rightMargin=72, leftMargin=72,
+                            topMargin=72, bottomMargin=72)
+    styles = getSampleStyleSheet()
+    
+    titulo_style = ParagraphStyle('titulo', parent=styles['Title'],
+                                   fontSize=18, textColor=colors.HexColor('#1a1a2e'),
+                                   spaceAfter=20)
+    subtitulo_style = ParagraphStyle('subtitulo', parent=styles['Normal'],
+                                      fontSize=11, textColor=colors.HexColor('#666666'),
+                                      spaceAfter=30)
+    user_style = ParagraphStyle('user', parent=styles['Normal'],
+                                 fontSize=10, textColor=colors.HexColor('#ffffff'),
+                                 backColor=colors.HexColor('#4a90d9'),
+                                 borderPadding=(8, 10, 8, 10),
+                                 spaceAfter=8)
+    bot_style = ParagraphStyle('bot', parent=styles['Normal'],
+                                fontSize=10, textColor=colors.HexColor('#1a1a2e'),
+                                backColor=colors.HexColor('#f0f0f0'),
+                                borderPadding=(8, 10, 8, 10),
+                                spaceAfter=8)
 
+    story = []
+    story.append(Paragraph("Sistema PQRS - CUL", titulo_style))
+    story.append(Paragraph(f"Reporte de Conversación | Sesión: {session_id[:8].upper()}", subtitulo_style))
+    story.append(Spacer(1, 0.2*inch))
+
+    for msg in historial:
+        rol = msg.get('rol', '')
+        contenido = msg.get('contenido', '')
+        timestamp = msg.get('timestamp', '')[:16]
+        
+        if rol == 'user':
+            story.append(Paragraph(f"<b>Estudiante</b> — {timestamp}", styles['Normal']))
+            story.append(Paragraph(contenido, user_style))
+        else:
+            story.append(Paragraph(f"<b>Asistente PQRS</b> — {timestamp}", styles['Normal']))
+            story.append(Paragraph(contenido, bot_style))
+        story.append(Spacer(1, 0.1*inch))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+
+def enviar_email_pdf(destinatario, pdf_buffer, session_id):
+    MAIL_USER = os.getenv('MAIL_USER', 'angiesfc29@gmail.com')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '')
+    
+    msg = MIMEMultipart()
+    msg['From'] = MAIL_USER
+    msg['To'] = destinatario
+    msg['Subject'] = f"Reporte Conversación PQRS - CUL | Sesión {session_id[:8].upper()}"
+    
+    body = """
+    Estimado usuario,
+    
+    Adjunto encontrará el reporte de su conversación con el Asistente Virtual PQRS de la 
+    Corporación Universitaria Latinoamericana (CUL).
+    
+    Corporación Universitaria Latinoamericana - CUL
+    Sistema PQRS Virtual
+    """
+    msg.attach(MIMEText(body, 'plain'))
+    
+    attachment = MIMEBase('application', 'octet-stream')
+    attachment.set_payload(pdf_buffer.read())
+    encoders.encode_base64(attachment)
+    attachment.add_header('Content-Disposition', f'attachment; filename="reporte_pqrs_{session_id[:8]}.pdf"')
+    msg.attach(attachment)
+    
+    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        server.starttls()
+        server.login(MAIL_USER, MAIL_PASSWORD)
+        server.send_message(msg)
+        
 usuario_bp = Blueprint('usuarios', __name__)
 conversacion_bp = Blueprint('conversaciones', __name__)
 pqrs_bp = Blueprint('pqrs', __name__)
@@ -136,6 +225,26 @@ def eliminar(session_id):
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 400
 
+@conversacion_bp.route('/<session_id>/reporte', methods=['POST'])
+def reporte(session_id):
+    data = request.get_json() or {}
+    email = data.get('email', '').strip()
+    
+    if not email:
+        return jsonify({'error': 'Email es obligatorio'}), 400
+    
+    resultado = conversacion_model.obtener_historial(session_id)
+    
+    if not resultado['ok'] or not resultado['historial']:
+        return jsonify({'error': 'Conversación no encontrada'}), 404
+    
+    try:
+        pdf_buffer = generar_pdf_conversacion(resultado['historial'], session_id)
+        enviar_email_pdf(email, pdf_buffer, session_id)
+        return jsonify({'ok': True, 'mensaje': f'Reporte enviado a {email}'}), 200
+    except Exception as e:
+        print(f"Error reporte: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @conversacion_bp.route('/usuario/<int:usuario_id>', methods=['GET'])
 def por_usuario(usuario_id):
