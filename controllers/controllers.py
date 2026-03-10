@@ -31,7 +31,7 @@ def get_respuesta_modelo(mensaje):
         r2 = requests.get(
             f"{SPACE_URL}/gradio_api/call/predict/{event_id}",
             stream=True,
-            timeout=180
+            timeout=300
         )
 
         for line in r2.iter_lines():
